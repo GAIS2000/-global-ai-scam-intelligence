@@ -1,4 +1,10 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [scamInput, setScamInput] = useState("");
+  const [result, setResult] = useState("");
   const features = [
     {
       title: "AI Scam Detection",
@@ -43,6 +49,11 @@ export default function Home() {
           <button className="rounded-lg border border-cyan-400/60 px-4 py-2 text-sm text-cyan-200">
             English / 中文
           </button>
+        {result && (
+          <div className="mt-4 rounded-xl border border-cyan-400/30 bg-cyan-950/30 p-4 text-sm text-cyan-100">
+            {result}
+          </div>
+        )}
         </div>
       </header>
 
@@ -159,11 +170,45 @@ export default function Home() {
             </div>
 
             <textarea
+          value={scamInput}
+          onChange={(e) => setScamInput(e.target.value)}
               placeholder="Paste suspicious message, URL, phone number, wallet address or project name..."
               className="mt-5 min-h-36 w-full rounded-xl border border-white/10 bg-black/20 p-4 text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/60"
             />
 
-            <button className="mt-4 w-full rounded-xl bg-cyan-500 py-3 font-semibold text-slate-950">
+            <button
+          onClick={async () => {
+            if (!scamInput.trim()) {
+              setResult("Please enter suspicious information first.");
+              return;
+            }
+
+            setResult("Analyzing with AI...");
+
+            try {
+              const response = await fetch("/api/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  input: scamInput,
+                  type: "Message",
+                }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                setResult(data.error || "AI analysis failed.");
+                return;
+              }
+
+              setResult(data.analysis);
+            } catch {
+              setResult("Unable to connect to AI analysis service.");
+            }
+          }}
+          className="mt-4 w-full rounded-xl bg-cyan-500 py-3 font-semibold text-slate-950"
+        >
               Analyze Scam Risk
             </button>
 
